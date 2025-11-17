@@ -1,0 +1,48 @@
+name: Lean Assignment Cypress Tests
+
+on:
+  push:
+    branches: [ "main" ] 
+
+env: 
+  PROJECT_DIRECTORY: "cypress"
+
+schedule: 
+  - cron: '0 2 * * *'
+  
+jobs:
+  cypress-run:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Setup Node
+      uses: actions/setup-node@v4
+      with:
+        node-version: 24
+
+    - name: Install Dependencies
+      run: npm install
+
+    - name: Run Cypress Tests
+      uses: cypress-io/github-action@v6
+      with:
+        browser: chrome
+        headless: true
+
+    - name: Merge Mochawesome Reports
+      run: |
+        npx mochawesome-merge reports/*.json > reports/report.json
+        npx marge reports/report.json -o reports
+
+    - name: Upload HTML Report
+      uses: actions/upload-artifact@v4
+      with:
+        name: mochawesome-report
+        path: reports
+
+      env:
+          CYPRESS_RECORD_KEY: ${{ secrets.CYPRESS_RECORD_KEY }}          
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}          
+          CYPRESS_PROJECT_ID: ${{ secrets.CYPRESS_PROJECT_ID }}
